@@ -7,16 +7,17 @@ def init_df(p1: str, p2: str, p3=None, p4=None) -> pd.DataFrame:
         ('Attack', 'K'), ('Attack', 'E'), ('Attack', 'TA'), ('Attack', 'PCT'),
         ('Set', 'A'), ('Set', 'E'),
         ('Block', 'B'), ('Block', 'BE'),
-        ('Serve', 'A'), ('Serve', 'E'),
+        ('Serve', 'A'), ('Serve', 'E'), ('Serve', 'SA'), ('Serve', 'PCT'),
         ('Def', 'Dig'), ('Def', 'BHE'),
-        ('Rec', 'RE')
+        ('Rec', 'RE'),
+        ('', 'PTS')
     ]
     cols = pd.MultiIndex.from_tuples(tuples)
     indx = [p1, p2] if not p3 else [p1, p2, p3, p4]
     df = pd.DataFrame(0, index=indx, columns=cols)
-    df.index.name = 'Player'
-    df = df.astype({col: int for col in cols if col != ('Attack', 'PCT')})
+    df = df.astype({col: int for col in cols if col not in [('Attack', 'PCT'), ('Serve', 'PCT')]})
     df[('Attack', 'PCT')] = 0.0
+    df[('Serve', 'PCT')] = 0.0
     return df
 
 def out_html(df: pd.DataFrame, filename: str) -> None:
@@ -45,9 +46,10 @@ class StatTrackerApp:
             ('Attack', 'K'), ('Attack', 'E'), ('Attack', 'TA'), ('Attack', 'PCT'),
             ('Set', 'A'), ('Set', 'E'),
             ('Block', 'B'), ('Block', 'BE'),
-            ('Serve', 'A'), ('Serve', 'E'),
+            ('Serve', 'A'), ('Serve', 'E'), ('Serve', 'SA'), ('Serve', 'PCT'),
             ('Def', 'Dig'), ('Def', 'BHE'),
-            ('Rec', 'RE')
+            ('Rec', 'RE'),
+            ('', 'PTS')
         ]
 
         self.summary_window = None
@@ -96,7 +98,7 @@ class StatTrackerApp:
             player_frame = player_frames[i]
 
             for j, (category, stats) in enumerate(grouped.items()):
-                if (category, stat) != ('Attack', 'PCT'): 
+                if (category, stat) not in [('Attack', 'PCT'), ('Serve', 'PCT')]: 
                     cat_frame = tk.LabelFrame(player_frame, text=category, padx=5, pady=5)
                     cat_frame.pack(fill="both", expand=True, pady=5)
 
@@ -105,7 +107,7 @@ class StatTrackerApp:
                     row.pack(anchor="w", pady=1)
 
                     tk.Label(row, text=stat, width=6).pack(side="left")
-                    if (category, stat) != ('Attack', 'PCT'):
+                    if (category, stat) not in [('Attack', 'PCT'), ('Serve', 'PCT')]:
                         tk.Button(row, text="+", width=2,
                                 command=lambda p=player, c=category, s=stat: self.update_stat(p, c, s, 1)).pack(side="left")
                         tk.Button(row, text="-", width=2,
@@ -131,11 +133,34 @@ class StatTrackerApp:
             # Update attack percentage if K, E, or TA is modified
             self.update_stat(player, 'Attack', 'TA', delta)
 
+        if (category, stat) in [('Serve', 'A'), ('Serve', 'E')]:
+            # Update serve percentage if A or E is modified
+            self.update_stat(player, 'Serve', 'SA', delta)
+        
         # Recalculate attack percentage
         K = self.df.at[player, ('Attack', 'K')]
         E = self.df.at[player, ('Attack', 'E')]
         TA = self.df.at[player, ('Attack', 'TA')]
         self.df.at[player, ('Attack', 'PCT')] = round((K - E) / TA, 3) if TA > 0 else 0.0
+
+        # recalculate serve percentage
+        SA = self.df.at[player, ('Serve', 'SA')]
+        A = self.df.at[player, ('Serve', 'A')]  
+        SE = self.df.at[player, ('Serve', 'E')]
+        self.df.at[player, ('Serve', 'PCT')] = round((A - SE) / SA, 3) if SA > 0 else 0.0
+
+        # Update Points
+        self.df.at[player, ('', 'PTS')] = (
+            K -
+            E -
+            self.df.at[player, ('Block', 'BE')] +
+            self.df.at[player, ('Block', 'B')] +
+            A -
+            SE -
+            self.df.at[player, ('Def', 'BHE')] -
+            self.df.at[player, ('Set', 'E')] -
+            self.df.at[player, ('Rec', 'RE')]
+        )
 
         self.update_summary_window()
 
