@@ -9,7 +9,7 @@ def init_df(p1: str, p2: str, p3=None, p4=None) -> pd.DataFrame:
         ('Block', 'B'), ('Block', 'BE'),
         ('Serve', 'A'), ('Serve', 'E'),
         ('Def', 'Dig'), ('Def', 'BHE'),
-        ('Reception', 'RE')
+        ('Rec', 'RE')
     ]
     cols = pd.MultiIndex.from_tuples(tuples)
     indx = [p1, p2] if not p3 else [p1, p2, p3, p4]
@@ -47,7 +47,7 @@ class StatTrackerApp:
             ('Block', 'B'), ('Block', 'BE'),
             ('Serve', 'A'), ('Serve', 'E'),
             ('Def', 'Dig'), ('Def', 'BHE'),
-            ('Reception', 'RE')
+            ('Rec', 'RE')
         ]
 
         self.summary_window = None
@@ -60,7 +60,7 @@ class StatTrackerApp:
         self.name_entries = []
         for i in range(4):
             entry = tk.Entry(self.root)
-            entry.grid(row=i + 1, column=0, padx=5, pady=5)
+            entry.grid(row=i + 1, column=0, padx=10, pady=5)
             self.name_entries.append(entry)
 
         tk.Button(self.root, text="Go", command=self.start_game).grid(row=5, column=0, columnspan=2, pady=10)
@@ -78,8 +78,6 @@ class StatTrackerApp:
 
     def create_stat_screen(self):
         self.clear_window()
-
-
         player_frames = []
 
         # Create player frames side-by-side
