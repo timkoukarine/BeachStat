@@ -63,7 +63,7 @@ class StatTrackerApp:
             entry.grid(row=i + 1, column=0, padx=5, pady=5)
             self.name_entries.append(entry)
 
-        tk.Button(self.root, text="Start 2v2", command=self.start_game).grid(row=5, column=0, columnspan=2, pady=10)
+        tk.Button(self.root, text="Go", command=self.start_game).grid(row=5, column=0, columnspan=2, pady=10)
 
     def start_game(self):
         names = [e.get().strip() for e in self.name_entries if e.get().strip()]
@@ -79,21 +79,39 @@ class StatTrackerApp:
     def create_stat_screen(self):
         self.clear_window()
 
-        for col, (category, stat) in enumerate(self.stat_categories):
-            tk.Label(self.root, text=f"{category}-{stat}").grid(row=0, column=col * 2 + 1, columnspan=2)
 
-        for row, player in enumerate(self.players):
-            tk.Label(self.root, text=player).grid(row=row + 1, column=0, sticky="w")
+        player_frames = []
 
-            for col, (category, stat) in enumerate(self.stat_categories):
-                btn_inc = tk.Button(self.root, text="+", width=2,
-                                    command=lambda p=player, c=category, s=stat: self.update_stat(p, c, s, 1))
-                btn_dec = tk.Button(self.root, text="–", width=2,
-                                    command=lambda p=player, c=category, s=stat: self.update_stat(p, c, s, -1))
+        # Create player frames side-by-side
+        for i, player in enumerate(self.players):
+            frame = tk.LabelFrame(self.root, text=player, padx=5, pady=5)
+            frame.grid(row=0, column=i, padx=10, pady=10, sticky="n")
+            player_frames.append(frame)
 
-                btn_inc.grid(row=row + 1, column=col * 2 + 1)
-                btn_dec.grid(row=row + 1, column=col * 2 + 2)
+        # Group stats by category
+        grouped = {}
+        for category, stat in self.stat_categories:
+            grouped.setdefault(category, []).append(stat)
 
+        # For each player
+        for i, player in enumerate(self.players):
+            player_frame = player_frames[i]
+
+            for j, (category, stats) in enumerate(grouped.items()):
+                if (category, stat) != ('Attack', 'PCT'): 
+                    cat_frame = tk.LabelFrame(player_frame, text=category, padx=5, pady=5)
+                    cat_frame.pack(fill="both", expand=True, pady=5)
+
+                for k, stat in enumerate(stats):
+                    row = tk.Frame(cat_frame)
+                    row.pack(anchor="w", pady=1)
+
+                    tk.Label(row, text=stat, width=6).pack(side="left")
+                    if (category, stat) != ('Attack', 'PCT'):
+                        tk.Button(row, text="+", width=2,
+                                command=lambda p=player, c=category, s=stat: self.update_stat(p, c, s, 1)).pack(side="left")
+                        tk.Button(row, text="-", width=2,
+                                command=lambda p=player, c=category, s=stat: self.update_stat(p, c, s, -1)).pack(side="left")
 
         entry_csv = tk.Entry(self.root, width=20)
         entry_csv.grid(row=len(self.players) + 2, column=0, pady=10)
