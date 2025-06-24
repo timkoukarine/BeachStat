@@ -151,15 +151,9 @@ class StatTrackerApp:
 
         # Update Points
         self.df.at[player, ('', 'PTS')] = (
-            K -
-            E -
-            self.df.at[player, ('Block', 'BE')] +
+            K +
             self.df.at[player, ('Block', 'B')] +
-            A -
-            SE -
-            self.df.at[player, ('Def', 'BHE')] -
-            self.df.at[player, ('Set', 'E')] -
-            self.df.at[player, ('Rec', 'RE')]
+            A
         )
 
         self.update_summary_window()
