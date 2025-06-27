@@ -3,6 +3,39 @@ from tkinter import messagebox, Toplevel, Text, Scrollbar
 import pandas as pd
 from main import init_df, out_html, out_csv
 
+def init_df(p1: str, p2: str, p3=None, p4=None) -> pd.DataFrame:
+    tuples = [
+        ('Attack', 'K'), ('Attack', 'E'), ('Attack', 'TA'), ('Attack', 'PCT'),
+        ('Set', 'A'), ('Set', 'E'),
+        ('Block', 'B'), ('Block', 'BE'),
+        ('Serve', 'A'), ('Serve', 'E'), ('Serve', 'SA'), ('Serve', 'PCT'),
+        ('Def', 'Dig'), ('Def', 'BHE'),
+        ('Rec', 'RE'),
+        ('', 'PTS')
+    ]
+    cols = pd.MultiIndex.from_tuples(tuples)
+    indx = [p1, p2] if not p3 else [p1, p2, p3, p4]
+    df = pd.DataFrame(0, index=indx, columns=cols)
+    df = df.astype({col: int for col in cols if col not in [('Attack', 'PCT'), ('Serve', 'PCT')]})
+    df[('Attack', 'PCT')] = 0.0
+    df[('Serve', 'PCT')] = 0.0
+    return df
+
+def out_html(df: pd.DataFrame, filename: str) -> None:
+    try:
+        df.to_html(filename, index=True)
+        messagebox.showinfo("Success", f"Data saved to {filename}")
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to save data: {e}")
+
+def out_csv(df: pd.DataFrame, filename: str) -> None:
+    try:
+        df.to_csv(filename, index=True)
+        messagebox.showinfo("Success", f"Data saved to {filename}")
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to save data: {e}")
+
+
 class StatTrackerApp:
     def __init__(self, root):
         self.root = root
